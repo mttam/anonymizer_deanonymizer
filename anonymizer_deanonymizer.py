@@ -26,6 +26,7 @@ class AnonymizerDeAnonymizer:
         # Initialize the Presidio analyzer with custom configuration
         try:
             self.analyzer = AnalyzerEngine()
+            
             # Add custom regex patterns for better SSN detection
             ssn_pattern = Pattern(
                 name="ssn_pattern",
@@ -36,7 +37,21 @@ class AnonymizerDeAnonymizer:
                 supported_entity="US_SSN",
                 patterns=[ssn_pattern]
             )
+            
+            # Add custom regex pattern for better email detection
+            email_pattern = Pattern(
+                name="email_pattern",
+                regex=r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+                score=1.0
+            )
+            email_recognizer = PatternRecognizer(
+                supported_entity="EMAIL_ADDRESS",
+                patterns=[email_pattern]
+            )
+            
+            # Add both recognizers
             self.analyzer.registry.add_recognizer(ssn_recognizer)
+            self.analyzer.registry.add_recognizer(email_recognizer)
             self.logger.info("Successfully initialized Presidio analyzer with custom patterns")
         except Exception as e:
             self.logger.error(f"Failed to initialize Presidio analyzer: {str(e)}")
@@ -87,7 +102,7 @@ class AnonymizerDeAnonymizer:
         Returns:
             str: Generated fake data matching the structure of the original.
         """
-        if entity_type == "EMAIL":
+        if entity_type == "EMAIL_ADDRESS":
             local_part = ''.join(random.choices(string.ascii_lowercase, k=8))
             domain = ''.join(random.choices(string.ascii_lowercase, k=6))
             return f"{local_part}@{domain}.com"
@@ -101,13 +116,16 @@ class AnonymizerDeAnonymizer:
         
         # For other types, maintain the structure including spaces and punctuation
         result = ""
-        for char in original_data:
-            if char.isalpha():
-                result += random.choice(string.ascii_letters)
-            elif char.isdigit():
-                result += random.choice(string.digits)
-            else:
-                result += char
+        if original_data.lower()!="email":
+            for char in original_data:
+                if char.isalpha():
+                    result += random.choice(string.ascii_letters)
+                elif char.isdigit():
+                    result += random.choice(string.digits)
+                else:
+                    result += char
+        else:
+            result=original_data
         return result
 
     def anonymize_text(
