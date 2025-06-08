@@ -123,27 +123,30 @@ class TestAnonymizerDeAnonymizer(unittest.TestCase):
         with open(model_response_path, 'w') as f:
             f.write(model_response)
 
-        # Step 3: Create a backup of the CSV mapping before de-anonymizing the prompt
-        # This is necessary because de-anonymization deletes the CSV file
+        # Step 3: IMPORTANT - Create backup of CSV mapping BEFORE de-anonymizing anything
         csv_backup_path = self.test_dir / f"backup_{csv_path.name}"
         shutil.copy2(csv_path, csv_backup_path)
 
-        # Step 4: De-anonymize the original prompt
+        # Step 4: De-anonymize the original prompt (this will delete the CSV file)
         deanonymized_prompt_path = self.anonymizer.deanonymize_text(
             anonymized_path,
             self.test_dir
         )
 
-        # Step 5: Restore the CSV mapping for de-anonymizing the model response
-        csv_restored_path = self.test_dir / f"anonymized_{model_response_path.stem}.csv"
-        shutil.copy2(csv_backup_path, csv_restored_path)
+        # Step 5: Manually create the expected CSV path for model response de-anonymization
+        # The de-anonymization expects a specific naming pattern
+        expected_csv_name = f"sensitive_data_{model_response_path.stem}.csv"
+        expected_csv_path = self.test_dir / expected_csv_name
+        
+        # Copy the backup to the expected location
+        shutil.copy2(csv_backup_path, expected_csv_path)
 
-        # Step 6: Create an anonymized version of the model response file
-        # We need to manually create this since the model response contains anonymized entities
+        # Step 6: Create an anonymized version of the model response file with expected naming
+        # The de-anonymization expects the file to start with "anonymized_"
         model_response_anonymized_path = self.test_dir / f"anonymized_{model_response_path.stem}.txt"
         shutil.copy2(model_response_path, model_response_anonymized_path)
 
-        # Step 7: De-anonymize the model response using the restored CSV
+        # Step 7: De-anonymize the model response
         deanonymized_model_response_path = self.anonymizer.deanonymize_text(
             model_response_anonymized_path,
             self.test_dir
@@ -234,13 +237,12 @@ class TestAnonymizerDeAnonymizer(unittest.TestCase):
             self.test_dir
         )
 
-        # Step 6: Prepare model response for de-anonymization
-        # Copy the model response to look like an anonymized file
+        # Step 6: Prepare model response for de-anonymization with correct naming
         model_anonymized_path = self.test_dir / f"anonymized_{model_response_path.stem}.txt"
         shutil.copy2(model_response_path, model_anonymized_path)
         
-        # Restore CSV mapping for model response de-anonymization
-        model_csv_path = self.test_dir / f"anonymized_{model_response_path.stem}.csv"
+        # Create CSV mapping for model response with expected naming pattern
+        model_csv_path = self.test_dir / f"sensitive_data_{model_response_path.stem}.csv"
         shutil.copy2(csv_backup_path, model_csv_path)
 
         # Step 7: De-anonymize the model response
