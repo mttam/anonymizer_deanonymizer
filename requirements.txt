@@ -1,0 +1,11 @@
+# Core dependencies for anonymizer_deanonymizer.py
+presidio-analyzer>=2.2.0
+spacy>=3.4.0
+
+# Optional but recommended for better performance
+torch>=1.9.0
+transformers>=4.21.0
+
+# Development dependencies (for testing and development)
+pytest>=7.0.0
+pytest-cov>=4.0.0
